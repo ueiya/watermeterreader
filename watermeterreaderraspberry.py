@@ -28,9 +28,9 @@
 # Digit 2 = n/a
 # Digit 3 = Section 1, w = 45 to 70 (diff 25)
 # Digit 4 = Section 2, w = 85 to 110 (diff 25)
-# Digit 5 = Section 3, w = 125 to 150 
+# Digit 5 = Section 3, w = 125 to 150
 # Digit 6 = Section 4, w = 170 to 195
-# Digit 7 = Section 5, w = 210 to 235 
+# Digit 7 = Section 5, w = 210 to 235
 # Digit 8 = n/a
 
 ## Camera Resolution
@@ -73,7 +73,7 @@ camera.stop_preview()
 # Stack images Function
 def stackImages(scale,imgArray):
     rows = len(imgArray)
-    cols = len(imgArray[0]) 
+    cols = len(imgArray[0])
     rowsAvailable = isinstance(imgArray[0], list)
     width = imgArray[0][0].shape[1]
     height = imgArray[0][0].shape[0]
@@ -133,8 +133,8 @@ for iterations, cropSize in sections.items():
     imgCropSection = imgCropped[int(h1):int(h2),int(w1):int(w2)]
     # Gray and blur
     gray = cv.cvtColor(imgCropSection, cv.COLOR_BGR2GRAY)
-    
-    # v2 
+
+    # v2
 
     #thresh = cv.adaptiveThreshold(gray,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,cv.THRESH_BINARY,11,2)
 
@@ -143,7 +143,7 @@ for iterations, cropSize in sections.items():
     width = int(gray.shape[1] * scale_percent / 100)
     height = int(gray.shape[0] * scale_percent / 100)
     dim = (width, height)
-  
+
     # Resize image
     resize = cv.resize(gray, dim, interpolation = cv.INTER_AREA)
 
@@ -175,7 +175,7 @@ for iterations, cropSize in sections.items():
     #white = [255,255,255]
     #padding = cv.copyMakeBorder(thresh,20,20,20,20,cv.BORDER_CONSTANT,value=white)
 
-    # Draw rectangle 
+    # Draw rectangle
     rect_height, rect_width = resize.shape # gets the size of the resized image
     cv.rectangle(thresh,(0,0),(rect_width, rect_height),(255,255,255),15) # 255,255,255 is white
 
@@ -196,7 +196,7 @@ for iterations, cropSize in sections.items():
     # Edge detection
     edges = cv.Canny(blur5,200,200)
 
-    # Invert image 
+    # Invert image
     # invert = cv.bitwise_not(edges)
 
     # Contours
@@ -210,7 +210,7 @@ for iterations, cropSize in sections.items():
         if 10 < area and 10 < w and h > 5:
             contours_dict[(x, y, w, h)] = cont
 
-    
+
     # Contours v.6.3.1 (detects 5/5, keep v6.2.1)
     #contours_dict = dict()
     #for cont in contours:
@@ -228,7 +228,7 @@ for iterations, cropSize in sections.items():
 
     # Resize image 2
     #resize2 = cv.resize(img_contours, dim, interpolation = cv.INTER_AREA)
-    
+
     # Invert image (the one with Contours)
     #invert_contours = cv.bitwise_not(img_contours)
 
@@ -306,7 +306,7 @@ wks.append_rows([outputList], value_input_option='USER-ENTERED', insert_data_opt
 #    12    Sparse text with OSD.
 #    13    Raw line. Treat the image as a single text line,
 #          bypassing hacks that are Tesseract-specific.
-#   
+#
 #   OCR Engine modes:
 #     0    Legacy engine only.
 #     1    Neural nets LSTM engine only.

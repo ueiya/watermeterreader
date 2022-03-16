@@ -1,11 +1,11 @@
 # ueiya_water_prototype_mac_v06.3.1.py
 
 # date created: 2022-01-20
-# date modified: 2022-02-08
+# date modified: 2022-03-16
 
 ### FOR USE IN MAC TO TEST, NOT RASPBERRY
 
-# Detects 5 out of 5 digits in water meter (sometimes)
+# Detects 5 out of 5 digits in water meter (most of the times)
 
 # Description
 
@@ -16,56 +16,34 @@
 # Appends data to Google Sheets with gspread
 # Pytesseract oem 10 identifies numbers best
 
-    # Possible alternative/next steps, suggested by Richard Gould https://github.com/rgould
+### Step 1
+## Add number sequence gotten from selectroi.py to 'Crop image' step in the code
 
-    # A HTTP API running on your laptop, listening for HTTP requests (ie. http://192.168.1.101/send_image)
-    # after taking a picture, send image to above URL
-    # ipconfig getifaddr en0
-    # http://192.168.2.104:8080/send_image
+### Step 2
+## Crop digits manually for 'Dictionary for Sections'. Use image preview on Mac to open images/cropped_image.jpg and get x,y coordinates of digits
+## x = h, y = w
 
-### Crop Sections Dictionary
+### Reference for Dictionary for Sections
 
 # Watermeter physical digits from left to Write
 
+# Camera digits with selectRoi 2022-03-16
 
-# 1 # To get camera digits
-# >>>>> USE CODE withe SelectROI() method in OPENCV in your Mac o PC
-
-# Camera digits with selectRoi 2022-02-01
-
-# Digit 1 = n/a
-# Digit 2 = n/a
-# Digit 3 = Section 1, w = 45 to 70 (diff 25)
-# Digit 4 = Section 2, w = 85 to 110 (diff 25)
-# Digit 5 = Section 3, w = 125 to 150
-# Digit 6 = Section 4, w = 170 to 195
-# Digit 7 = Section 5, w = 210 to 235
-# Digit 8 = n/a
-
-## Camera Digits reference table
-## The meter we use, uses 8 digits. We will remove digit 1 and 2 from the picture, because we´re not going to track them in this version of the prototype.
+## The meter we use has 8 digits. We will remove digit 1 and 2 from the picture, and we're
+## measuring the last digit (digit 8) as 0, because we´re not going to track them in this version of the prototype.
 
 # Digit 1 = n/a
 # Digit 2 = n/a
-# Digit 3 = Section 1, w = 235 to 340
-# Digit 4 = Section 2, w = 340 to 455
-# Digit 5 = Section 3, w = 455 to 570
-# Digit 6 = Section 4, w = 570 to 685
-# Digit 7 = Section 5, w = 685 to 789
+# Digit 3 = Section 1, w = 53 to 86 (diff = 33) + 10 pixels difference, add to every section
+# Digit 4 = Section 2, w = 96 to 129 
+# Digit 5 = Section 3, w = 139 to 172
+# Digit 6 = Section 4, w = 182 to 215
+# Digit 7 = Section 5, w = 225 to 258
 # Digit 8 = n/a
-
-#sections = {'section1': {'height1': '0', 'height2': '150', 'width1': '230','width2': '305'},'section2': {'height1': '0', 'height2': '150', 'width1': '340','width2': '420'},'section3': {'height1': '0', 'height2': '150', 'width1': '445','width2': '530'},'section4': {'height1': '0', 'height2': '150', 'width1': '570','width2': '653'},'section5': {'height1': '0', 'height2': '150', 'width1': '680','width2': '760'}}
-
 
 ## Camera Resolution
 
-# Max Resolution # Error: not enough resources
-
-# Width: 4056
-# Heigth: 3040
-
 # camera.resolution = (2028, 1520) # Good alternative
-
 
 # Import packages
 
@@ -79,6 +57,7 @@ from time import sleep
 import re
 #import gspread
 
+###### Commented for watermeterreadermac.py
 ##### # Define Camera
 ##### camera = PiCamera()
 #####
@@ -92,11 +71,7 @@ import re
 #####
 ##### # Take picture, save and resize
 ##### ## In your Raspberry Pi, add folder path to images
-#####
-##### # v1
-##### #camera.capture('/home/pi/python/environments/ueiya_env/images/image_0.jpg', resize=(4056, 3040))
-#####
-##### # v2
+##### 
 ##### camera.capture('/home/pi/python/environments/ueiya_env/images/image_0.jpg')
 ##### camera.stop_preview()
 
@@ -133,22 +108,23 @@ def stackImages(scale,imgArray):
     return ver
 
 # Accesing image
-path = '/Users/daviderubio/Desktop/Python_stuff/environments/ueiya_env/v2_test_photos/2022-02-15_image_0.jpg'
+path = '/Users/daviderubio/Desktop/Python_stuff/environments/ueiya_env/v2_test_photos/calibrate.jpg'
 img = cv.imread(path)
 
-# Crop image v1
-imgCropped = img[675:723,878:1114]
+# Crop image - Add number sequence gotten from selectroi.py to Crop image
+#imgCropped = img[675:723,878:1114]
+imgCropped = img[787:837,839:1109]
 cv.imwrite('/Users/daviderubio/Desktop/Python_stuff/environments/ueiya_env/images/last_image_taken.jpg', imgCropped)
 
 # Define list for output to CSV (this will be used in the last step)
 outputList = []
 
 # Dictionary for Sections
-sections = {'section1':{'height1': '0', 'height2': '49', 'width1': '45','width2': '70'},\
-'section2': {'height1': '0', 'height2': '49', 'width1': '85','width2': '110'},\
-'section3': {'height1': '0', 'height2': '49', 'width1': '125','width2': '150'},\
-'section4': {'height1': '0', 'height2': '49', 'width1': '170','width2': '195'},\
-'section5': {'height1': '0', 'height2': '49', 'width1': '210','width2': '235'}}
+sections = {'section1':{'height1': '0', 'height2': '50', 'width1': '53','width2': '83'},\
+'section2': {'height1': '0', 'height2': '50', 'width1': '96','width2': '129'},\
+'section3': {'height1': '0', 'height2': '50', 'width1': '142','width2': '172'},\
+'section4': {'height1': '0', 'height2': '50', 'width1': '192','width2': '215'},\
+'section5': {'height1': '0', 'height2': '50', 'width1': '235','width2': '263'}}
 
 # Loop through dictionary for Sections
 
@@ -303,20 +279,20 @@ with open('/Users/daviderubio/Desktop/Python_stuff/environments/ueiya_env/data.c
 
 print(outputList)
 
-# Access Google Sheets with gspread
-
-gc = gspread.service_account(filename='/Users/daviderubio/Desktop/Python_stuff/environments/ueiya_env/credentials.json')
-
-# Open spreadsheet by key
-sh = gc.open_by_key('1SpFfW5fRbZJ-Acs3yePcDEsvWOo88p22K5Y_NP_c26U')
-
-# Open worksheet
-wks = sh.worksheet("raw-data")
-
-# Search for a table in the worksheet and append a row to it
-wks.append_rows([outputList], value_input_option='USER-ENTERED', insert_data_option=None, table_range=None)
-#wks.append_rows([outputList]) # Simple append, no extra options
-
+### Uncomment if to set up Google Sheets with gspread
+## # Access Google Sheets with gspread
+## 
+## gc = gspread.service_account(filename='/home/pi/python/environments/ueiya_env/credentials.json')
+## 
+## # Open spreadsheet by key
+## sh = gc.open_by_key('1SpFfW5fRbZJ-Acs3yePcDEsvWOo88p22K5Y_NP_c26U')
+## 
+## # Open worksheet
+## wks = sh.worksheet("raw-data")
+## 
+## # Search for a table in the worksheet and append a row to it
+## wks.append_rows([outputList], value_input_option='USER-ENTERED', insert_data_option=None, table_range=None)
+## #wks.append_rows([outputList]) # Simple append, no extra options
 
 ## PyTesseract Documentation
 

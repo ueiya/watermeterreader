@@ -1,43 +1,51 @@
-# ueiya_water_prototype_raspberry_v06.3.py
+# ueiya_water_prototype_mac_v06.3.1.py
 
 # date created: 2022-01-20
-# date modified: 2022-02-08
+# date modified: 2022-03-16
 
-# Detects 5 out of 5 digits in water meter (sometimes)
+### FOR USE IN RASPBERRY
+
+# Detects 5 out of 5 digits in water meter (most of the times)
 
 # Description
 
 # Raspberry Picamera, takes a picture, capture to openCV object,
-# Crops individual digits (a.k.a sections)
+# Analyzes individual sections/digits,
 # Uses for loop to iterate digits
 # Adds output to data.csv
 # Appends data to Google Sheets with gspread
 # Pytesseract oem 10 identifies numbers best
 
-### Crop Sections Dictionary
+### Step 1
+## Add number sequence gotten from selectroi.py to 'Crop image' step in the code
+
+### Step 2
+## Crop digits manually for 'Dictionary for Sections'. Use image preview on Mac to open images/cropped_image.jpg and get x,y coordinates of digits
+## x = h, y = w
+
+### Reference for Dictionary for Sections
 
 # Watermeter physical digits from left to Write
 
-# 1 # To get camera digits >>>>> USE CODE with SelectROI() method in OPENCV in your Mac o PC
+# Camera digits with selectRoi 2022-03-16
 
-# Camera digits with selectRoi 2022-02-01
 ## The meter we use has 8 digits. We will remove digit 1 and 2 from the picture, and we're
 ## measuring the last digit (digit 8) as 0, because we´re not going to track them in this version of the prototype.
 
 # Digit 1 = n/a
 # Digit 2 = n/a
-# Digit 3 = Section 1, w = 45 to 70 (diff 25)
-# Digit 4 = Section 2, w = 85 to 110 (diff 25)
-# Digit 5 = Section 3, w = 125 to 150
-# Digit 6 = Section 4, w = 170 to 195
-# Digit 7 = Section 5, w = 210 to 235
+# Digit 3 = Section 1, w = 53 to 86 (diff = 33) + 10 pixels difference, add to every section
+# Digit 4 = Section 2, w = 96 to 129 
+# Digit 5 = Section 3, w = 139 to 172
+# Digit 6 = Section 4, w = 182 to 215
+# Digit 7 = Section 5, w = 225 to 258
 # Digit 8 = n/a
 
 ## Camera Resolution
 
 # camera.resolution = (2028, 1520) # Good alternative
 
-# 2 # Import packages
+# Import packages
 
 import numpy as np
 import cv2 as cv
@@ -49,6 +57,7 @@ from time import sleep
 import re
 import gspread
 
+###### Commented for watermeterreadermac.py
 # Define Camera
 camera = PiCamera()
 
@@ -63,10 +72,6 @@ sleep(2)
 # Take picture, save and resize
 ## In your Raspberry Pi, add folder path to images
 
-# v1
-#camera.capture('/home/pi/python/environments/ueiya_env/images/image_0.jpg', resize=(4056, 3040))
-
-# v2
 camera.capture('/home/pi/python/environments/ueiya_env/images/image_0.jpg')
 camera.stop_preview()
 
@@ -106,19 +111,19 @@ def stackImages(scale,imgArray):
 path = '/home/pi/python/environments/ueiya_env/images/image_0.jpg'
 img = cv.imread(path)
 
-# Crop image v1
-imgCropped = img[675:723,878:1114]
+# Crop image - Add number sequence gotten from selectroi.py to Crop image
+imgCropped = img[787:837,839:1109]
 cv.imwrite('/home/pi/python/environments/ueiya_env/images/last_image_taken.jpg', imgCropped)
 
 # Define list for output to CSV (this will be used in the last step)
 outputList = []
 
 # Dictionary for Sections
-sections = {'section1':{'height1': '0', 'height2': '49', 'width1': '45','width2': '70'},\
-'section2': {'height1': '0', 'height2': '49', 'width1': '85','width2': '110'},\
-'section3': {'height1': '0', 'height2': '49', 'width1': '125','width2': '150'},\
-'section4': {'height1': '0', 'height2': '49', 'width1': '170','width2': '195'},\
-'section5': {'height1': '0', 'height2': '49', 'width1': '210','width2': '235'}}
+sections = {'section1':{'height1': '0', 'height2': '50', 'width1': '53','width2': '83'},\
+'section2': {'height1': '0', 'height2': '50', 'width1': '96','width2': '129'},\
+'section3': {'height1': '0', 'height2': '50', 'width1': '142','width2': '172'},\
+'section4': {'height1': '0', 'height2': '50', 'width1': '192','width2': '215'},\
+'section5': {'height1': '0', 'height2': '50', 'width1': '235','width2': '263'}}
 
 # Loop through dictionary for Sections
 
@@ -147,7 +152,7 @@ for iterations, cropSize in sections.items():
     # Resize image
     resize = cv.resize(gray, dim, interpolation = cv.INTER_AREA)
 
-    # Blug image
+    # Blur image
     blur = cv.GaussianBlur(resize,(5,5),0)
 
     # Equalize Histogram
@@ -211,7 +216,7 @@ for iterations, cropSize in sections.items():
             contours_dict[(x, y, w, h)] = cont
 
 
-    # Contours v.6.3.1 (detects 5/5, keep v6.2.1)
+    # Contours v.6.3.1 (detects 5/5, but v6.2.1 is better)
     #contours_dict = dict()
     #for cont in contours:
     #    x, y, w, h = cv.boundingRect(cont)
@@ -251,11 +256,11 @@ for iterations, cropSize in sections.items():
     print("- Image Recognition. The water meter number is:", getNumber)
     # Show the images / Stacked
     imgBlank = np.zeros_like(resize)
-    #imgStack = stackImages(0.8,([equalize],[dilation],[thresh],[closing],[erosion],[blur2],[blur3],[blur4],[blur5],[edges],[img_contours]))
+    imgStack = stackImages(0.8,([equalize],[dilation],[thresh],[closing],[erosion],[blur2],[blur3],[blur4],[blur5],[edges],[img_contours]))
     #imgStack2 = stackImages(0.8,([blur5],[edges],[img_contours]))
-    #cv.imshow("Stack", imgStack2)
-    #cv.waitKey(0)
-    #cv.destroyAllWindows()
+    cv.imshow("Stack", imgStack)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
 
 # Add last digit to output list. Digit is 0.
 
@@ -273,20 +278,20 @@ with open('/home/pi/python/environments/ueiya_env/data.csv', 'a') as csvfile:
 
 print(outputList)
 
-# Access Google Sheets with gspread
-
-gc = gspread.service_account(filename='/home/pi/python/environments/ueiya_env/credentials.json')
-
-# Open spreadsheet by key
-sh = gc.open_by_key('1SpFfW5fRbZJ-Acs3yePcDEsvWOo88p22K5Y_NP_c26U')
-
-# Open worksheet
-wks = sh.worksheet("raw-data")
-
-# Search for a table in the worksheet and append a row to it
-wks.append_rows([outputList], value_input_option='USER-ENTERED', insert_data_option=None, table_range=None)
-#wks.append_rows([outputList]) # Simple append, no extra options
-
+### Uncomment if to set up Google Sheets with gspread
+## # Access Google Sheets with gspread
+## 
+## gc = gspread.service_account(filename='/home/pi/python/environments/ueiya_env/credentials.json')
+## 
+## # Open spreadsheet by key
+## sh = gc.open_by_key('1SpFfW5fRbZJ-Acs3yePcDEsvWOo88p22K5Y_NP_c26U')
+## 
+## # Open worksheet
+## wks = sh.worksheet("raw-data")
+## 
+## # Search for a table in the worksheet and append a row to it
+## wks.append_rows([outputList], value_input_option='USER-ENTERED', insert_data_option=None, table_range=None)
+## #wks.append_rows([outputList]) # Simple append, no extra options
 
 ## PyTesseract Documentation
 

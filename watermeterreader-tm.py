@@ -1,26 +1,19 @@
 # watermeterreadermac-tm.py
 
-# date created: 2022-01-20
-# date modified: 2022-03-23
-
-### FOR USE IN MAC TO TEST, NOT RASPBERRY
-
-# Detects 5 out of 5 digits in water meter (most of the times)
-
 # Description
 
 # Raspberry Picamera, takes a picture, capture to openCV object,
 # Analyzes individual sections/digits,
 # Uses for loop to iterate digits
 # Adds output to data.csv
-# Appends data to Google Sheets with gspread
 # OpenCV template matching identifies numbers
+# Appends data to Google Sheets with gspread
 
 ### Step 1
 ## Add number sequence gotten from selectroi.py to 'Crop image' step in the code
 
 ### Step 2
-## Crop digits manually for 'Dictionary for Sections'. Use image preview on Mac to open images/cropped_image.jpg and get x,y coordinates of digits
+## Crop digits manually for 'Dictionary for Sections'. Use selectroi.py get x,y coordinates of digits
 ## x = h, y = w
 
 ### Reference for Dictionary for Sections
@@ -162,7 +155,7 @@ def stackImages(scale,imgArray):
     return ver
 
 # Accesing image
-path = '/Users/daviderubio/Desktop/Python_stuff/environments/ueiya_env/v2_test_photos/2022-04-04_1551_calibrate.jpg'
+path = '/Users/daviderubio/Desktop/Python_stuff/environments/ueiya_env/v2_test_photos/2022-04-06_1756_calibrate.jpg'
 img = cv.imread(path)
 
 # Crop image - Add number sequence gotten from selectroi.py to Crop image
@@ -196,8 +189,6 @@ for iterations, cropSize in sections.items():
 
     # v2
 
-    #thresh = cv.adaptiveThreshold(gray,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,cv.THRESH_BINARY,11,2)
-
     # Resize inputs
     scale_percent = 300 # percent of original size
     width = int(gray.shape[1] * scale_percent / 100)
@@ -213,47 +204,27 @@ for iterations, cropSize in sections.items():
     # Equalize Histogram
     equalize = cv.equalizeHist(blur)
 
-    # Adaptive Thresholding
-    #thresh = cv.adaptiveThreshold(equalize,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,cv.THRESH_BINARY,11,2)
-    #edges = cv.Canny(thresh,100,200)
-
-    # Otsu thresholding
-    #blur = cv.GaussianBlur(equalize,(5,5),0)
-    #ret,thresh = cv.threshold(equalize,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)
-
     # Morphological tranformations
     kernel = np.ones((5,5),np.uint8)
-    #erosion = cv.erode(equalize,kernel,iterations = 2)
     dilation = cv.dilate(equalize,kernel,iterations = 1)
-    #opening = cv.morphologyEx(equalize, cv.MORPH_OPEN, kernel)
-    #closing = cv.morphologyEx(equalize, cv.MORPH_CLOSE, kernel)
 
     # Adaptive Thresholding v6.2.1.
     thresh = cv.adaptiveThreshold(dilation,255,cv.ADAPTIVE_THRESH_GAUSSIAN_C,cv.THRESH_BINARY,41,11)
-
-    # Padding (make borders for image)
-    #white = [255,255,255]
-    #padding = cv.copyMakeBorder(thresh,20,20,20,20,cv.BORDER_CONSTANT,value=white)
 
     # Draw rectangle
     rect_height, rect_width = resize.shape # gets the size of the resized image
     cv.rectangle(thresh,(0,0),(rect_width, rect_height),(255,255,255),15) # 255,255,255 is white
 
-    # Morphological tranformations v.6.2.1
-    #closing = cv.morphologyEx(thresh, cv.MORPH_CLOSE, kernel)
-    #erosion = cv.erode(closing,kernel,iterations = 1)
-
-    # Morphological tranformations v.6.3.1
+    # Morphological tranformations
     closing = cv.morphologyEx(thresh, cv.MORPH_CLOSE, kernel)
 
     ######## TEMPLATE MATCHING TEST
 
     # Path to image template
     invert_image = np.invert(closing)
-    #invert_image = np.invert(blur5)
 
     template = invert_image
-    cv_show(n, invert_image)
+    #cv_show(n, invert_image)
     
     # Calculate match score:  What's the score of 0 , What's the score of 1 ...
 
@@ -274,7 +245,6 @@ for iterations, cropSize in sections.items():
         scores.append(max_score)
         #print("scores：",scores)
 
-
     # Get the most appropriate number
     digit_score = float(np.max(scores))
     print("max score：",str(np.max(scores)))
@@ -286,31 +256,11 @@ for iterations, cropSize in sections.items():
     print("template matching output：",groupOutput)
 
     ######## TEMPLATE MATCHING TEST
-
-    # # Pytesseract text recognition
-    # digit = pytesseract.image_to_string(blur5, config='--psm 10 --oem 3 -c tessedit_char_whitelist=0123456789')
-    # 
-    # # Strip Values
-    # stripValues = digit.strip()
-    # print("List Value is:", stripValues)
-    # 
-    # # Find Numbers
-    # findNumber = re.findall('[0-9]+', stripValues)
-    # print(findNumber)
-    # 
-    # # Get number from list
-    # #getNumber = findNumber[0]
-    # if len(findNumber) == 1:
-    #     getNumber = findNumber[0]
-    # else:
-    #     getNumber = 100 # I pass 100 and later in data cleaning I filter out this value, as digits can only be 0-9
     
     # Append to OutputList
     outputList.append(int(getNumber))
     outputListScores.append(float(digit_score))
 
-    # print("- Image Recognition. The water meter number is:", getNumber)
-    # 
     # # Show the images / Stacked
     # imgBlank = np.zeros_like(resize)
     # imgStack = stackImages(0.8,([equalize],[dilation],[thresh],[closing],[erosion],[blur2],[blur3],[blur4],[blur5],[edges],[img_contours]))
@@ -352,28 +302,3 @@ print(outputList, outputListScores)
 ## # Search for a table in the worksheet and append a row to it
 ## wks.append_rows([outputList], value_input_option='USER-ENTERED', insert_data_option=None, table_range=None)
 ## #wks.append_rows([outputList]) # Simple append, no extra options
-
-## PyTesseract Documentation
-
-#   Page segmentation modes:
-#     0    Orientation and script detection (OSD) only.
-#     1    Automatic page segmentation with OSD.
-#     2    Automatic page segmentation, but no OSD, or OCR. (not implemented)
-#     3    Fully automatic page segmentation, but no OSD. (Default)
-#     4    Assume a single column of text of variable sizes.
-#     5    Assume a single uniform block of vertically aligned text.
-#     6    Assume a single uniform block of text.
-#     7    Treat the image as a single text line.
-#     8    Treat the image as a single word.
-#     9    Treat the image as a single word in a circle.
-#    10    Treat the image as a single character.
-#    11    Sparse text. Find as much text as possible in no particular order.
-#    12    Sparse text with OSD.
-#    13    Raw line. Treat the image as a single text line,
-#          bypassing hacks that are Tesseract-specific.
-#
-#   OCR Engine modes:
-#     0    Legacy engine only.
-#     1    Neural nets LSTM engine only.
-#     2    Legacy + LSTM engines.
-#     3    Default, based on what is available.

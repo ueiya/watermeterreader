@@ -4,17 +4,24 @@
 
 import cv2
 
-im = cv2.imread("/Users/daviderubio/Desktop/Ueiya Prototype V2/prototype_v2_photos/v2-2028x1520-image_0.jpg")
+# Open the image
+im = cv2.imread("/Users/daviderubio/Desktop/Python_stuff/environments/ueiya_env/v2_test_photos/calibrate.jpg")
 
+# Select image roi - User input required in GUI
 roi = cv2.selectROI(im)
 
-print(roi)
+print('ROI is: ' + str(roi))
 
-im_cropped = im[int(roi[1]):int(roi[1]+roi[3]),
-			int(roi[0]):int(roi[0]+roi[2])]
+im_cropped = im[int(roi[1]):int(roi[1]+roi[3]),int(roi[0]):int(roi[0]+roi[2])]
 
 cv2.imshow("Cropped Image", im_cropped)
 cv2.waitKey(0)
+
+cv2.imwrite('/Users/daviderubio/Desktop/Python_stuff/environments/ueiya_env/images/cropped_image.jpg',im_cropped)
+
+# Print output ordered for watermeterreader.py
+
+print('Copy the following number sequence to watermeterreader.py: ' + str(roi[1])+ ':' + str(roi[1]+roi[3])+ ',' +str(roi[0])+ ':' +str(roi[0]+roi[2]))
 
 # Example of printed Result (878, 673, 236, 50)
 

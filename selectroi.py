@@ -6,7 +6,7 @@ import cv2
 from matplotlib import pyplot as plt
 
 # Open the image
-im = cv2.imread("/Users/daviderubio/Desktop/Python_stuff/environments/ueiya_env/v2_test_photos/calibrate.jpg")
+im = cv2.imread("images/calibrate.jpg")
 
 # Select image roi - User input required in GUI
 roi = cv2.selectROI(im)
@@ -18,7 +18,7 @@ im_cropped = im[int(roi[1]):int(roi[1]+roi[3]),int(roi[0]):int(roi[0]+roi[2])]
 cv2.imshow("Cropped Image", im_cropped)
 cv2.waitKey(0)
 
-cv2.imwrite('/Users/daviderubio/Desktop/Python_stuff/environments/ueiya_env/images/cropped_image.jpg',im_cropped)
+cv2.imwrite('images/cropped_image.jpg',im_cropped)
 
 # Print output ordered for watermeterreader.py
 

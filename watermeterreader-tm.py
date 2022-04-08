@@ -1,4 +1,4 @@
-# watermeterreadermac-tm.py
+# watermeterreader-tm.py
 
 # Description
 
@@ -13,7 +13,7 @@
 ## Add number sequence gotten from selectroi.py to 'Crop image' step in the code
 
 ### Step 2
-## Crop digits manually for 'Dictionary for Sections'. Use selectroi.py get x,y coordinates of digits
+## Use selectroi.py get x,y coordinates of digits and add manually to 'Dictionary for Sections'. 
 ## x = h, y = w
 
 ### Reference for Dictionary for Sections
@@ -22,7 +22,7 @@
 
 # Camera digits with selectRoi 2022-03-16
 
-## The meter we use has 8 digits. We will remove digit 1 and 2 from the picture, and we're
+## The meter we use has 8 digits. We will ignore digit 1 and 2 from the picture, and we're
 ## measuring the last digit (digit 8) as 0, because we´re not going to track them in this version of the prototype.
 
 # Digit 1 = n/a
@@ -34,15 +34,10 @@
 # Digit 7 = Section 5, w = 225 to 258
 # Digit 8 = n/a
 
-## Camera Resolution
-
-# camera.resolution = (2028, 1520) # Good alternative
-
 # Import packages
 
 import numpy as np
 import cv2 as cv
-import pytesseract
 import csv
 import datetime
 #from picamera import PiCamera
@@ -73,7 +68,7 @@ from matplotlib import pyplot as plt
 ##### # Take picture, save and resize
 ##### ## In your Raspberry Pi, add folder path to images
 ##### 
-##### camera.capture('/home/pi/python/environments/ueiya_env/images/image_0.jpg')
+##### camera.capture('images/image_0.jpg')
 ##### camera.stop_preview()
 
 ######## TEMPLATE MATCHING TEST
@@ -83,18 +78,18 @@ def cv_show(name, img):
     cv.imshow(name, img)
     cv.waitKey(0)
 
-n = 'test'
+n = 'image preview'
 
 # Read in template map
-path_template = '/Users/daviderubio/Desktop/Python_stuff/environments/ueiya_env/ueiya_gimp/ocr-ueiya-chalkboard-white.jpg'
+path_template = 'images/ocr-ueiya-manual-white-02.jpg'
 img_template = cv.imread(path_template)
 
 # Template conversion to grayscale image
 ref = cv.cvtColor(img_template, cv.COLOR_BGR2GRAY)
 # cv_show(n, ref)
 
-#Convert to binary graph, turn the digital part into white
-#, function multiple return values are tuples, here take the second return value
+# Convert to binary graph, turn the digital part into white
+# function multiple return values are tuples, here take the second return value
 ref = cv.threshold(ref, 10, 255, cv.THRESH_BINARY_INV)[1]
 #cv_show(n, ref)
 
@@ -155,12 +150,23 @@ def stackImages(scale,imgArray):
     return ver
 
 # Accesing image
-path = '/Users/daviderubio/Desktop/Python_stuff/environments/ueiya_env/v2_test_photos/2022-04-06_1756_calibrate.jpg'
+path = 'images/image_0.jpg'
 img = cv.imread(path)
 
+# Rotate image - add '0' in rotate_angle if no rotation is necessary
+(h, w) = img.shape[:2]
+rotate_center = (w / 2, h / 2)
+rotate_angle = -2
+rotate_scale = 1
+
+rotate_matrix = cv.getRotationMatrix2D(rotate_center, rotate_angle, rotate_scale)
+imgRotated = cv.warpAffine(img, rotate_matrix, (w, h))
+#cv_show(n, imgRotated)
+
 # Crop image - Add number sequence gotten from selectroi.py to Crop image
-imgCropped = img[782:830,847:1112]
-cv.imwrite('/Users/daviderubio/Desktop/Python_stuff/environments/ueiya_env/images/last_image_taken.jpg', imgCropped)
+imgCropped = imgRotated[776:826,847:1112]
+cv.imwrite('images/last_image_taken.jpg', imgCropped)
+cv_show(n, imgCropped)
 
 # Define list for output to CSV (this will be used in the last step)
 outputList = []
@@ -176,7 +182,7 @@ sections = {'section1':{'height1': '0', 'height2': '50', 'width1': '49','width2'
 # Loop through dictionary for Sections
 
 for iterations, cropSize in sections.items():
-    print(iterations)
+    #print(iterations)
     h1 = cropSize['height1']
     h2 = cropSize['height2']
     w1 = cropSize['width1']
@@ -224,7 +230,7 @@ for iterations, cropSize in sections.items():
     invert_image = np.invert(closing)
 
     template = invert_image
-    #cv_show(n, invert_image)
+    cv_show(n, invert_image)
     
     # Calculate match score:  What's the score of 0 , What's the score of 1 ...
 
@@ -247,13 +253,13 @@ for iterations, cropSize in sections.items():
 
     # Get the most appropriate number
     digit_score = float(np.max(scores))
-    print("max score：",str(np.max(scores)))
+    #print("max score：",str(np.max(scores)))
 
     # Returns the position of the maximum value in the input list
     getNumber = str(np.argmax(scores))
     groupOutput.append(str(np.argmax(scores)))
     
-    print("template matching output：",groupOutput)
+    #print("template matching output：",groupOutput)
 
     ######## TEMPLATE MATCHING TEST
     
@@ -282,16 +288,16 @@ outputList.append(str(timestamp))
 
 finalList = outputList + outputListScores
 
-with open('/Users/daviderubio/Desktop/Python_stuff/environments/ueiya_env/data-v2.10.csv', 'a') as csvfile:
+with open('data-v2.10.csv', 'a') as csvfile:
     writer = csv.writer(csvfile)
     writer.writerow(finalList)
 
 print(outputList, outputListScores)
 
-### Uncomment if to set up Google Sheets with gspread
+### Uncomment to set up Google Sheets with gspread
 ## # Access Google Sheets with gspread
 ## 
-## gc = gspread.service_account(filename='/home/pi/python/environments/ueiya_env/credentials.json')
+## gc = gspread.service_account(filename='credentials.json')
 ## 
 ## # Open spreadsheet by key
 ## sh = gc.open_by_key('1SpFfW5fRbZJ-Acs3yePcDEsvWOo88p22K5Y_NP_c26U')

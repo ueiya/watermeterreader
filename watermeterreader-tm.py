@@ -44,6 +44,9 @@ import datetime
 from time import sleep
 import re
 #import gspread
+import random
+import csv
+import os.path
 
 ######## TEMPLATE MATCHING TEST
 
@@ -86,7 +89,7 @@ img_template = cv.imread(path_template)
 
 # Template conversion to grayscale image
 ref = cv.cvtColor(img_template, cv.COLOR_BGR2GRAY)
-# cv_show(n, ref)
+#cv_show(n, ref)
 
 # Convert to binary graph, turn the digital part into white
 # function multiple return values are tuples, here take the second return value
@@ -166,7 +169,7 @@ imgRotated = cv.warpAffine(img, rotate_matrix, (w, h))
 # Crop image - Add number sequence gotten from selectroi.py to Crop image
 imgCropped = imgRotated[776:826,847:1112]
 cv.imwrite('images/last_image_taken.jpg', imgCropped)
-cv_show(n, imgCropped)
+#cv_show(n, imgCropped)
 
 # Define list for output to CSV (this will be used in the last step)
 outputList = []
@@ -192,8 +195,6 @@ for iterations, cropSize in sections.items():
     imgCropSection = imgCropped[int(h1):int(h2),int(w1):int(w2)]
     # Gray and blur
     gray = cv.cvtColor(imgCropSection, cv.COLOR_BGR2GRAY)
-
-    # v2
 
     # Resize inputs
     scale_percent = 300 # percent of original size
@@ -230,7 +231,7 @@ for iterations, cropSize in sections.items():
     invert_image = np.invert(closing)
 
     template = invert_image
-    cv_show(n, invert_image)
+    #cv_show(n, invert_image)
     
     # Calculate match score:  What's the score of 0 , What's the score of 1 ...
 
@@ -288,7 +289,23 @@ outputList.append(str(timestamp))
 
 finalList = outputList + outputListScores
 
-with open('data-v2.10.csv', 'a') as csvfile:
+## Write data to CSV
+#with open('data-v2.10.csv', 'a') as csvfile:
+#    writer = csv.writer(csvfile)
+#    writer.writerow(finalList)
+
+## Write data to CSV, add headers if none exist
+
+filename = 'data/data.csv'
+file_exists = os.path.isfile(filename)
+v = random.randint(0, 100)
+
+with open(filename, "a") as csvfile:
+    headers = ['d1','d2','d3','d4','d5','d6','timestamp','d1_score','d2_score','d3_score','d4_score','d5_score']
+    writer = csv.DictWriter(csvfile, delimiter=',', lineterminator='\n',fieldnames=headers)
+    if not file_exists:
+        writer.writeheader()  # file doesn't exist yet, write a header
+
     writer = csv.writer(csvfile)
     writer.writerow(finalList)
 

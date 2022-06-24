@@ -45,7 +45,6 @@ from time import sleep
 import re
 #import gspread
 import random
-import csv
 import os.path
 
 ######## TEMPLATE MATCHING TEST
@@ -167,7 +166,9 @@ imgRotated = cv.warpAffine(img, rotate_matrix, (w, h))
 #cv_show(n, imgRotated)
 
 # Crop image - Add number sequence gotten from selectroi.py to Crop image
-imgCropped = imgRotated[776:826,847:1112]
+#imgCropped = imgRotated[763:813,845:1112] # 6 digits/sections
+imgCropped = imgRotated[760:814,895:1114] # 5 digits/sections
+
 cv.imwrite('images/last_image_taken.jpg', imgCropped)
 #cv_show(n, imgCropped)
 
@@ -176,11 +177,11 @@ outputList = []
 outputListScores = []
 
 # Dictionary for Sections
-sections = {'section1':{'height1': '0', 'height2': '50', 'width1': '49','width2': '76'},\
-'section2': {'height1': '0', 'height2': '50', 'width1': '95','width2': '125'},\
-'section3': {'height1': '0', 'height2': '50', 'width1': '140','width2': '168'},\
-'section4': {'height1': '0', 'height2': '50', 'width1': '184','width2': '213'},\
-'section5': {'height1': '0', 'height2': '50', 'width1': '230','width2': '260'}}
+sections = {'section1':{'height1': '0', 'height2': '54', 'width1': '0','width2': '25'},\
+'section2': {'height1': '0', 'height2': '54', 'width1': '45','width2': '70'},\
+'section3': {'height1': '0', 'height2': '54', 'width1': '93','width2': '118'},\
+'section4': {'height1': '0', 'height2': '54', 'width1': '140','width2': '167'},\
+'section5': {'height1': '0', 'height2': '54', 'width1': '185','width2': '215'}}
 
 # Loop through dictionary for Sections
 

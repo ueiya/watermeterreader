@@ -26,7 +26,7 @@ def cv_show(name, img):
     cv.waitKey(0)
 
 # Open image
-path = '/Users/daviderubio/Desktop/Python_stuff/environments/ueiya_env/v2_test_photos/d9.jpg'
+path = 'images/d9.jpg'
 img = cv.imread(path)
 
 # Gray and blur
@@ -93,4 +93,4 @@ closing = cv.morphologyEx(thresh, cv.MORPH_CLOSE, kernel)
 invert_image = np.invert(closing)
 
 # Save image
-cv.imwrite('/Users/daviderubio/Desktop/Python_stuff/environments/ueiya_env/v2_test_photos/digit_processed_9.jpg',invert_image)
+cv.imwrite('images/digit_processed_9.jpg',invert_image)

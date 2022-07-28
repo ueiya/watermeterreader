@@ -1,14 +1,15 @@
-# watermeterreader
-Prototype raspberry pi project to read analogue water meters in real-time
+# About Ueiya
+Measure and optimise your water usage, decrease your utility costs, and help finance water projects around the world.
+www.ueiya.com
 
 # About this project
-A DIY project that allows you to track water usage of your home (or facility) in real-time.
+A DIY project that allows you to track the water usage of your home (or facility) in real-time. The tools needed are raspberry pi, a camera, python, OpenCV (among other libraries)
 
 # Overview
-- A picture is taken every X seconds by raspberry pi
-- The picture is analised with OpenCV and digits are extracted
-- The digits are saved in CSV file
-- A data munging & visualisation script cleans the data and plots graphs of liters used per hour.
+- A picture of an analogue water meter is taken every X seconds by raspberry pi + camera.
+- The picture is analised with a python script that uses OpenCV and digits are extracted.
+- The digits are saved in CSV file.
+- A data munging & visualisation script cleans the data and plots graphs of water liters used per hour/day.
 
 # Documentation can be found here:
 
@@ -22,7 +23,7 @@ A DIY project that allows you to track water usage of your home (or facility) in
 
 [Data Munging & Visualisation (TO BE DONE…)](https://www.notion.so/Data-Munging-Visualisation-TO-BE-DONE-aefbbb97911d456bab190dc51b41b910)
 
-# Current challenges
-- User Interface, data munging & visualisation: there is currently no UI. I use Jupter Notebook to analyse and visualise the data. The data.csv file is copied manually from Raspberry PI to Mac. This could be done in a web server.
-- Scalability: This is a prototype and not yet at a stage to scale. There are many types of analogue water meters. Manual setup in the physical world is required and adjustments to he scripts are currently necessary. 
+# Challenges (Where I need your support)
+- User Interface, data munging & visualisation: there is currently no UI. I use Jupter Notebook to analyse and visualise the data. The data.csv file that is generated in the raspberry pi is copied manually from to my Mac. There's big room for improvement here.
+- Scalability: This is a prototype v2 and is not yet at a stage than can scale. There are many types of analogue water meters with individual differences. Manual setup in the physical world is required and custom adjustments to the scripts are necessary. 
 - Accuracy of reading: A higher quality camera would allow beter image definition and more accurate readings.

@@ -1,7 +1,10 @@
 import cv2
+import easyocr
 import numpy as np
-import pytesseract
 from loguru import logger as logging
+import glob
+import os
+import detect_roi
 
 
 # get grayscale image
@@ -50,41 +53,59 @@ def canny(image):
     return cv2.Canny(image, 100, 200)
 
 
-pytesseract.pytesseract.tesseract_cmd = r"E:\Ueiya\Tesseract-OCR\tesseract.exe"
+easyocr_reader = easyocr.Reader(["en"])
 
-# read full image
-full_image = cv2.imread("image_0.jpg")
+images_path = "E:/Ueiya/Images/images_2023-08-01_to_2023-08-08/*.jpg"
 
-# crop the region where meter reading are present
-crop_img = full_image[288 * 2 : 354 * 2, 388 * 2 : 685 * 2]
+for image_path in glob.glob(images_path):
 
-crop_h, crop_w = crop_img.shape[:2]
-len_of_chars = 8
+    _, image_name = os.path.split(image_path)
 
-# divide the crop region into subregions of size of len of characters
-each_char_w = int(crop_w / len_of_chars)
+    # read full image
+    full_image = cv2.imread(image_path)
 
-meter_prediction = ""
+    bbox_roi = detect_roi.run(weights="best.pt", source=image_path, device='cpu')
 
-# loop through each character
-for i in range(len_of_chars):
-    each_char = crop_img[:, i * each_char_w : (i + 1) * each_char_w, :]
+    x1 = int(bbox_roi[0].item())
+    y1 = int(bbox_roi[1].item())
+    x2 = int(bbox_roi[2].item())
+    y2 = int(bbox_roi[3].item())
 
-    gray = get_grayscale(each_char)
+    # crop the region where meter reading are present
+    # crop_img = full_image[658:774, 755:1309]
+    crop_img = full_image[y1:y2, x1:x2]
+
+    gray = get_grayscale(crop_img)
 
     # all pixels with value less than threshold are set to 0
     gray[gray < 5] = 0
 
-    predicted_val = pytesseract.image_to_string(
-        gray, config="--psm 6 --oem 3 -c tessedit_char_whitelist=0123456789"
-    )
+    crop_h, crop_w = gray.shape[:2]
+    len_of_chars = 8
 
-    # remove trailing '\n'
-    predicted_val = predicted_val.rstrip()
+    # divide the crop region into subregions of size of len of characters
+    each_char_w = int(crop_w / len_of_chars)
 
-    if predicted_val == "":
-        predicted_val = "X"
+    characters = []
 
-    meter_prediction += predicted_val
+    # loop through each character
+    for i in range(len_of_chars):
+        each_char = gray[:, i * each_char_w : (i + 1) * each_char_w]
 
-logging.info(f"Predicted meter reading is : {meter_prediction}")
+        invert = cv2.bitwise_not(each_char)
+
+        detection = easyocr_reader.readtext(invert, allowlist="0123456789")
+        if len(detection) == 0:
+            character = 'X'
+        else:
+            character = detection[0][1]
+            if len(character) > 1:
+                character = character[1]
+            elif len(character) == 1:
+                character = character[0]
+
+        characters.append(character)
+    logging.debug(f"Image name : {image_name}, prediction : {''.join(characters)}")
+
+    cv2.imshow("Current image", crop_img)
+    cv2.waitKey(0)
